@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Main entry point for cc-atlas
+# This script delegates to the appropriate script in the scripts/ directory
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Run the start script with all arguments passed through
+"$SCRIPT_DIR/scripts/start.sh" "$@"

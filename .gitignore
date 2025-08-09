@@ -1,0 +1,18 @@
+# Rust
+/target
+**/*.rs.bk
+Cargo.lock
+
+# Frontend
+node_modules/
+dist/
+.vite/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

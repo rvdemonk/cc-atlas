@@ -1,0 +1,72 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3e3e3e;
+}
+
+.editor-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.editor-path {
+  font-size: 0.9rem;
+  color: #cccccc;
+}
+
+.unsaved {
+  color: #ffa500;
+  font-size: 1.2rem;
+}
+
+.editor-stats {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: #1e1e1e;
+  border-bottom: 1px solid #3e3e3e;
+  font-size: 0.85rem;
+  color: #858585;
+}
+
+.save-button {
+  padding: 0.5rem 1rem;
+  background: #0e639c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.save-button:hover:not(:disabled) {
+  background: #1177bb;
+}
+
+.save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-textarea {
+  flex: 1;
+  padding: 1rem;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: none;
+  outline: none;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: none;
+}
