@@ -1,0 +1,210 @@
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar-collapsed {
+  width: 0;
+  border-right: none;
+}
+
+.sidebar-collapsed .tree-node-name,
+.sidebar-collapsed .tree-node-badges {
+  display: none;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-sm);
+}
+
+/* Custom scrollbar */
+.sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Tree node */
+.tree-node {
+  user-select: none;
+}
+
+.tree-node-header {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--space-sm);
+  margin: 1px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.tree-node-header:hover {
+  background: var(--bg-tertiary);
+}
+
+.tree-node-header.selected {
+  background: var(--bg-tertiary);
+  border-left: 2px solid var(--eva-orange);
+  padding-left: calc(var(--space-sm) - 2px);
+}
+
+.tree-node-indent {
+  width: calc(var(--level) * 16px);
+  flex-shrink: 0;
+}
+
+.tree-node-chevron,
+.tree-node-spacer {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+}
+
+.tree-node-chevron:hover {
+  color: var(--text-primary);
+}
+
+.tree-node-spacer {
+  cursor: default;
+}
+
+.tree-node-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--space-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.tree-node-name {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+/* Visual hint that the directory name is clickable when it has a memory file */
+.tree-node-header:hover .tree-node-name {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--border-color);
+  text-underline-offset: 3px;
+}
+
+.tree-node-badges {
+  display: flex;
+  gap: var(--space-xs);
+  margin-left: var(--space-sm);
+}
+
+.badge {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all 0.15s;
+  background: none;
+  border: 1px solid transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.badge-recommend {
+  color: var(--eva-yellow);
+  background: rgba(255, 217, 61, 0.1);
+  border-color: rgba(255, 217, 61, 0.2);
+  cursor: default;
+}
+
+.badge-memory {
+  color: var(--eva-green);
+  border-color: rgba(82, 208, 83, 0.3);
+}
+
+.badge-memory:hover {
+  background: rgba(82, 208, 83, 0.1);
+  border-color: var(--eva-green);
+}
+
+.badge-memory.active {
+  background: rgba(82, 208, 83, 0.2);
+  border-color: var(--eva-green);
+}
+
+.badge-memory-new {
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+
+.badge-memory-new:hover {
+  color: var(--eva-purple);
+  background: rgba(123, 104, 166, 0.1);
+  border-color: var(--eva-purple);
+}
+
+.badge-memory-new.active {
+  color: var(--eva-purple);
+  background: rgba(123, 104, 166, 0.2);
+  border-color: var(--eva-purple);
+}
+
+.tree-node-children {
+  position: relative;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    position: absolute;
+    z-index: 100;
+    height: 100%;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .sidebar-collapsed {
+    transform: translateX(-100%);
+  }
+}
