@@ -5,8 +5,18 @@ use std::path::PathBuf;
 pub struct MemoryFile {
     pub path: PathBuf,
     pub content: String,
+    pub content_html: Option<String>,  // Cached HTML version
     pub relative_path: String,
     pub stats: FileStats,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryFileResponse {
+    pub path: String,
+    pub content: String,
+    pub content_html: String,
+    pub exists: bool,
+    pub parent_path: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

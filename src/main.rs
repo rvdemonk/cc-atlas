@@ -4,6 +4,7 @@ use clap::{Parser, Subcommand};
 mod analyzer;
 mod server;
 mod models;
+pub mod markdown;
 
 #[derive(Parser)]
 #[command(name = "cc-atlas")]

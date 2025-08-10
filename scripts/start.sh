@@ -41,8 +41,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Convert to absolute path
-PROJECT_PATH=$(cd "$PROJECT_PATH" 2>/dev/null && pwd || echo "$PROJECT_PATH")
+# Convert to absolute path - must be done BEFORE changing directory
+if [ -d "$PROJECT_PATH" ]; then
+    PROJECT_PATH=$(cd "$PROJECT_PATH" && pwd)
+else
+    echo -e "${YELLOW}Warning: Project path '$PROJECT_PATH' does not exist or is not a directory${NC}"
+    exit 1
+fi
 
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║         Starting cc-atlas              ║${NC}"
@@ -98,7 +103,7 @@ sleep 2
 
 # Start frontend
 echo -e "${GREEN}Starting frontend development server...${NC}"
-(cd frontend && npm run dev -- --host) &
+(cd frontend && npm run dev) &
 FRONTEND_PID=$!
 
 echo ""

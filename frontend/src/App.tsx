@@ -1,117 +1,240 @@
-import React, { useState, useEffect } from 'react'
-import TreeView from './components/TreeView'
-import Editor from './components/Editor'
-import { fetchTree, fetchMemoryFiles, updateMemoryFile } from './api/client'
+import { useState, useEffect, useCallback } from 'react'
 import './App.css'
-
-export interface DirectoryInfo {
-  path: string
-  name: string
-  has_memory: boolean
-  children: DirectoryInfo[]
-  stats: {
-    file_count: number
-    total_lines: number
-    depth: number
-  }
-}
-
-export interface MemoryFile {
-  path: string
-  content: string
-  relative_path: string
-  stats: {
-    file_count: number
-    total_lines: number
-    depth: number
-  }
-}
+import { Sidebar } from './components/Sidebar'
+import { Editor } from './components/Editor'
+import { Header } from './components/Header'
+import * as api from './api/client'
+import { deleteMemoryFile } from './api/client'
+import { MemoryFile, AppState } from './types'
 
 function App() {
-  const [tree, setTree] = useState<DirectoryInfo | null>(null)
-  const [memoryFiles, setMemoryFiles] = useState<MemoryFile[]>([])
-  const [selectedFile, setSelectedFile] = useState<MemoryFile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [state, setState] = useState<AppState>({
+    tree: null,
+    memoryFiles: [],
+    recommendations: [],
+    selectedFile: null,
+    loading: true,
+    error: null,
+    sidebarCollapsed: false
+  })
 
+  // Load initial data
   useEffect(() => {
     loadData()
   }, [])
 
   const loadData = async () => {
     try {
-      const [treeData, filesData] = await Promise.all([
-        fetchTree(),
-        fetchMemoryFiles()
+      setState(prev => ({ ...prev, loading: true, error: null }))
+      
+      const [tree, memoryFiles, recommendations] = await Promise.all([
+        api.fetchTree(),
+        api.fetchMemoryFiles(),
+        api.fetchRecommendations()
       ])
-      setTree(treeData)
-      setMemoryFiles(filesData)
+      
+      console.log('Loaded memory files:', memoryFiles)
+      
+      setState(prev => ({
+        ...prev,
+        tree,
+        memoryFiles,
+        recommendations,
+        loading: false
+      }))
     } catch (error) {
-      console.error('Failed to load data:', error)
-    } finally {
-      setLoading(false)
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to load data',
+        loading: false
+      }))
     }
   }
 
-  const handleSave = async (content: string) => {
-    if (!selectedFile) return
-    
-    try {
-      await updateMemoryFile(selectedFile.relative_path, content)
-      setSelectedFile({ ...selectedFile, content })
-      setMemoryFiles(prev => 
-        prev.map(f => f.path === selectedFile.path 
-          ? { ...f, content } 
-          : f
-        )
-      )
-    } catch (error) {
-      console.error('Failed to save:', error)
-    }
-  }
-
-  const handleSelectPath = (path: string) => {
-    const file = memoryFiles.find(f => f.path === path)
+  const selectFile = useCallback((file: MemoryFile | null) => {
+    console.log('Selecting file:', file)
+    // If selecting a file, get the latest version from memoryFiles
     if (file) {
-      setSelectedFile(file)
+      setState(prev => {
+        const latestFile = prev.memoryFiles.find(f => f.path === file.path)
+        return { ...prev, selectedFile: latestFile || file }
+      })
+    } else {
+      setState(prev => ({ ...prev, selectedFile: null }))
     }
+  }, [])
+
+  const updateFile = useCallback(async (
+    path: string, 
+    content: string, 
+    isHtml: boolean = false
+  ) => {
+    try {
+      // Check if the file exists on disk (exists property is true)
+      const existingFile = state.memoryFiles.find(f => f.path === path)
+      const fileExistsOnDisk = existingFile?.exists === true
+      
+      let result;
+      let wasCreated = false;
+      
+      if (fileExistsOnDisk) {
+        // Update existing file
+        result = await api.updateMemoryFile(path, content, isHtml)
+      } else {
+        // Create new file - only when there's actual content
+        if (!content || content.trim().length === 0) {
+          // Don't create empty files
+          return { success: true, content: '' }
+        }
+        result = await api.createMemoryFile(path, content, isHtml)
+        wasCreated = result.created === true
+      }
+      
+      // Update local state with the returned markdown content
+      const updatedContent = result.content
+      
+      // Reload tree and memory files if this was a new file creation
+      if (wasCreated) {
+        const [tree, memoryFiles] = await Promise.all([
+          api.fetchTree(),
+          api.fetchMemoryFiles()
+        ])
+        
+        // Update everything in one setState call
+        setState(prev => {
+          // Find the newly created file in the fetched memoryFiles
+          const newFile = memoryFiles.find(f => f.path === path)
+          
+          return {
+            ...prev,
+            tree,
+            memoryFiles,
+            // Update selectedFile if it's the one we just created
+            selectedFile: prev.selectedFile?.path === path && newFile
+              ? newFile
+              : prev.selectedFile
+          }
+        })
+      } else {
+        // For existing files OR if creation returned 409 (file already exists)
+        // Update the file to mark it as existing
+        setState(prev => {
+          const fileIndex = prev.memoryFiles.findIndex(file => file.path === path)
+          
+          if (fileIndex >= 0) {
+            const updatedFiles = [...prev.memoryFiles]
+            updatedFiles[fileIndex] = {
+              ...updatedFiles[fileIndex],
+              content: updatedContent,
+              content_html: isHtml ? content : '',
+              exists: true
+            }
+            return { ...prev, memoryFiles: updatedFiles }
+          } else if (!fileExistsOnDisk) {
+            // File was created but returned 409, need to add it to the list
+            const newFile: MemoryFile = {
+              path,
+              content: updatedContent,
+              content_html: isHtml ? content : '',
+              exists: true,
+              parent_path: path.substring(0, path.lastIndexOf('/'))
+            }
+            return { 
+              ...prev, 
+              memoryFiles: [...prev.memoryFiles, newFile],
+              // Also update selectedFile if it's the one we're saving
+              selectedFile: prev.selectedFile?.path === path 
+                ? { ...newFile }
+                : prev.selectedFile
+            }
+          }
+          
+          return prev
+        })
+      }
+      
+      return { success: true, content: updatedContent }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to save'
+      }
+    }
+  }, [state.memoryFiles, state.selectedFile])
+
+  const toggleSidebar = useCallback(() => {
+    setState(prev => ({ ...prev, sidebarCollapsed: !prev.sidebarCollapsed }))
+  }, [])
+  
+  const deleteFile = useCallback(async (path: string): Promise<boolean> => {
+    try {
+      const result = await deleteMemoryFile(path)
+      
+      if (result.deleted) {
+        // Reload tree and memory files after deletion
+        const [tree, memoryFiles] = await Promise.all([
+          api.fetchTree(),
+          api.fetchMemoryFiles()
+        ])
+        
+        // Clear selected file if it was the deleted one
+        setState(prev => ({
+          ...prev,
+          tree,
+          memoryFiles,
+          selectedFile: prev.selectedFile?.path === path ? null : prev.selectedFile
+        }))
+        
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Failed to delete file:', error)
+      return false
+    }
+  }, [])
+
+  if (state.loading) {
+    return (
+      <div className="app-loading">
+        <div className="loading-spinner" />
+        <p>Loading repository structure...</p>
+      </div>
+    )
   }
 
-  if (loading) {
-    return <div className="loading">Loading...</div>
+  if (state.error) {
+    return (
+      <div className="app-error">
+        <h2>Error loading application</h2>
+        <p>{state.error}</p>
+        <button onClick={loadData}>Retry</button>
+      </div>
+    )
   }
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>cc-atlas</h1>
-        <div className="stats">
-          Memory Files: {memoryFiles.length}
-        </div>
-      </header>
+      <Header 
+        onToggleSidebar={toggleSidebar}
+        projectName={state.tree?.name || 'cc-atlas'}
+      />
       
       <div className="app-body">
-        <aside className="sidebar">
-          {tree && (
-            <TreeView 
-              tree={tree} 
-              onSelectPath={handleSelectPath}
-              selectedPath={selectedFile?.path}
-            />
-          )}
-        </aside>
+        <Sidebar
+          tree={state.tree}
+          memoryFiles={state.memoryFiles}
+          recommendations={state.recommendations}
+          selectedFile={state.selectedFile}
+          onSelectFile={selectFile}
+          collapsed={state.sidebarCollapsed}
+        />
         
-        <main className="main">
-          {selectedFile ? (
-            <Editor 
-              file={selectedFile}
-              onSave={handleSave}
-            />
-          ) : (
-            <div className="no-selection">
-              Select a CLAUDE.md file to edit
-            </div>
-          )}
-        </main>
+        <Editor
+          file={state.selectedFile}
+          onSave={updateFile}
+          onDelete={deleteFile}
+        />
       </div>
     </div>
   )

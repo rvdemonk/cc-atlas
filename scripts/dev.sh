@@ -15,6 +15,11 @@ NC='\033[0m'
 PROJECT_PATH="${1:-.}"
 PORT="${2:-3999}"
 
+# Convert to absolute path BEFORE changing directory
+if [ -d "$PROJECT_PATH" ]; then
+    PROJECT_PATH=$(cd "$PROJECT_PATH" && pwd)
+fi
+
 echo -e "${BLUE}Starting cc-atlas in development mode${NC}"
 echo -e "Project: $PROJECT_PATH"
 echo -e "Port: $PORT"

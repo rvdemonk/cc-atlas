@@ -74,6 +74,7 @@ fn create_memory_file(entry: &walkdir::DirEntry, root: &Path) -> Result<MemoryFi
     Ok(MemoryFile {
         path: path.to_path_buf(),
         content,
+        content_html: None,  // Will be converted when needed
         relative_path,
         stats,
     })
@@ -87,7 +88,16 @@ fn get_relative_path(path: &Path, root: &Path) -> String {
 }
 
 pub fn build_directory_tree(root: &Path) -> Result<DirectoryInfo> {
-    let name = get_directory_name(root);
+    // For the root, get the actual directory name from the absolute path
+    let name = if root == Path::new(".") || root == Path::new("./") {
+        root.canonicalize()
+            .ok()
+            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+            .unwrap_or_else(|| "root".to_string())
+    } else {
+        get_directory_name(root)
+    };
+    
     let has_memory = check_has_memory(root);
     let stats = calculate_stats(root)?;
     let children = build_children(root)?;
@@ -102,10 +112,16 @@ pub fn build_directory_tree(root: &Path) -> Result<DirectoryInfo> {
 }
 
 fn get_directory_name(path: &Path) -> String {
+    // For root directory, use the actual folder name
     path.file_name()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .to_string()
+        .map(|name| name.to_string_lossy().to_string())
+        .unwrap_or_else(|| {
+            // If no file_name (e.g., "."), use the full path's last component
+            path.canonicalize()
+                .ok()
+                .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+                .unwrap_or_else(|| "root".to_string())
+        })
 }
 
 fn check_has_memory(path: &Path) -> bool {
@@ -201,7 +217,7 @@ fn should_have_memory(stats: &FileStats) -> bool {
 
 fn is_ignored(path: &Path) -> bool {
     const IGNORED_DIRS: &[&str] = &[
-        ".git", "node_modules", "target", "dist", "build",
+        ".git", ".claude", "node_modules", "target", "dist", "build",
         ".next", ".cache", "coverage", "__pycache__"
     ];
     

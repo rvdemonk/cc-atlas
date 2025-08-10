@@ -37,45 +37,61 @@ cd "$CC_ATLAS_ROOT/frontend"
 npm install
 npm run build
 
-# Create a wrapper script for global usage
-WRAPPER_SCRIPT="/usr/local/bin/cc-atlas"
+# Determine installation directory
+# Try user's cargo bin first (no sudo needed), then /usr/local/bin
+if [ -d "$HOME/.cargo/bin" ]; then
+    INSTALL_DIR="$HOME/.cargo/bin"
+    USE_SUDO=""
+    echo -e "${GREEN}Installing to $INSTALL_DIR (no sudo required)${NC}"
+else
+    INSTALL_DIR="/usr/local/bin"
+    USE_SUDO="sudo"
+    echo -e "${YELLOW}Installing to $INSTALL_DIR (requires sudo)${NC}"
+fi
+
+WRAPPER_SCRIPT="$INSTALL_DIR/cc-atlas"
 
 echo -e "${BLUE}Creating global command...${NC}"
 
-sudo tee "$WRAPPER_SCRIPT" > /dev/null << 'EOF'
-#!/bin/bash
+# Create wrapper script content
+WRAPPER_CONTENT="#!/bin/bash
 
 # cc-atlas global wrapper
-CC_ATLAS_HOME="/Users/lewis/code/cc-atlas"
+CC_ATLAS_HOME=\"$CC_ATLAS_ROOT\"
 
 # Default to current directory if no path specified
-PROJECT_PATH="${1:-.}"
+PROJECT_PATH=\"\${1:-.}\"
 
 # Convert to absolute path
-PROJECT_PATH=$(cd "$PROJECT_PATH" 2>/dev/null && pwd || echo "$PROJECT_PATH")
+PROJECT_PATH=\$(cd \"\$PROJECT_PATH\" 2>/dev/null && pwd || echo \"\$PROJECT_PATH\")
 
-if [ ! -d "$PROJECT_PATH" ]; then
-    echo "Error: Directory $PROJECT_PATH does not exist"
+if [ ! -d \"\$PROJECT_PATH\" ]; then
+    echo \"Error: Directory \$PROJECT_PATH does not exist\"
     exit 1
 fi
 
-echo "Starting cc-atlas for: $PROJECT_PATH"
+echo \"Starting cc-atlas for: \$PROJECT_PATH\"
 
 # Change to cc-atlas directory and run
-cd "$CC_ATLAS_HOME"
-./scripts/start.sh --project "$PROJECT_PATH"
-EOF
+cd \"\$CC_ATLAS_HOME\"
+./scripts/start.sh --project \"\$PROJECT_PATH\"
+"
 
-# Replace the path in the wrapper script with the actual installation path
-sudo sed -i '' "s|CC_ATLAS_HOME=\".*\"|CC_ATLAS_HOME=\"$CC_ATLAS_ROOT\"|" "$WRAPPER_SCRIPT"
-
-# Make it executable
-sudo chmod +x "$WRAPPER_SCRIPT"
+# Write the wrapper script
+if [ -n "$USE_SUDO" ]; then
+    echo "$WRAPPER_CONTENT" | sudo tee "$WRAPPER_SCRIPT" > /dev/null
+    sudo chmod +x "$WRAPPER_SCRIPT"
+else
+    echo "$WRAPPER_CONTENT" > "$WRAPPER_SCRIPT"
+    chmod +x "$WRAPPER_SCRIPT"
+fi
 
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════${NC}"
 echo -e "${GREEN}cc-atlas installed successfully!${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════${NC}"
+echo ""
+echo -e "${BLUE}Installed to:${NC} $WRAPPER_SCRIPT"
 echo ""
 echo -e "${BLUE}Usage:${NC}"
 echo "  cc-atlas              # Analyze current directory"
@@ -87,4 +103,6 @@ echo "  cc-atlas"
 echo ""
 echo "  # Or from anywhere:"
 echo "  cc-atlas ~/projects/my-app"
+echo ""
+echo -e "${YELLOW}Note:${NC} Make sure $INSTALL_DIR is in your PATH"
 echo ""
