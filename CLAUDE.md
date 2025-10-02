@@ -32,6 +32,7 @@ cc-atlas           # Main entry point
 src/               # Rust backend - analyzer, server, models
 frontend/          # React UI - tree view, editor
 scripts/           # Shell scripts for running/installing
+
 ```
 
 Development Workflow
@@ -41,6 +42,7 @@ Development Workflow
 ./scripts/dev.sh   # Development with hot reload
 ./scripts/start.sh # Production build
 cargo check        # Verify Rust compilation
+
 ```
 
 * Don't start the server unless I ask -- I'm usually running it myself.
@@ -61,4 +63,4 @@ Next Phase
 
 * Staleness detection based on git commits and file changes
 
-* Automatic creation algorithms and prompts for memory files
+* Automatic creation algorithms and prompts for memory files (need to design anatomy of memory files optimally and prompts)

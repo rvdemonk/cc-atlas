@@ -73,7 +73,6 @@ fi
 cleanup() {
     echo -e "\n${YELLOW}Shutting down cc-atlas...${NC}"
     kill $BACKEND_PID 2>/dev/null
-    kill $FRONTEND_PID 2>/dev/null
     exit
 }
 
@@ -93,29 +92,29 @@ if [ ! -d "frontend/node_modules" ]; then
     (cd frontend && npm install)
 fi
 
-# Start backend
-echo -e "${GREEN}Starting backend server on port $PORT...${NC}"
+# Build frontend if needed
+if [ ! -d "frontend/dist" ]; then
+    echo -e "${BLUE}Building frontend...${NC}"
+    (cd frontend && npm run build)
+fi
+
+# Start backend (which now serves frontend too)
+echo -e "${GREEN}Starting cc-atlas server on port $PORT...${NC}"
 ./target/release/cc-atlas serve --port $PORT --project "$PROJECT_PATH" &
 BACKEND_PID=$!
 
 # Wait a moment for backend to start
 sleep 2
 
-# Start frontend
-echo -e "${GREEN}Starting frontend development server...${NC}"
-(cd frontend && npm run dev) &
-FRONTEND_PID=$!
-
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════${NC}"
 echo -e "${GREEN}cc-atlas is running!${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════${NC}"
-echo -e "Frontend: ${BLUE}http://localhost:3000${NC}"
-echo -e "Backend:  ${BLUE}http://localhost:$PORT${NC}"
+echo -e "URL:      ${BLUE}http://localhost:$PORT${NC}"
 echo -e "Project:  ${BLUE}$PROJECT_PATH${NC}"
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
 echo ""
 
-# Wait for both processes
-wait $BACKEND_PID $FRONTEND_PID
+# Wait for backend process
+wait $BACKEND_PID

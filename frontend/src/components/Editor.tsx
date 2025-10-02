@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { EditorProps, EditorState } from '../types'
 import { HiEye, HiCode, HiCheck, HiX, HiTrash } from 'react-icons/hi'
+import { HiTable, HiPlus, HiMinus } from 'react-icons/hi'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import './Editor.css'
 
 
@@ -32,7 +34,13 @@ export const Editor: React.FC<EditorProps> = ({ file, onSave, onDelete }) => {
       StarterKit,
       Placeholder.configure({
         placeholder: placeholderText,
-      })
+      }),
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell
     ],
     content: '',
     editorProps: {
@@ -299,6 +307,61 @@ export const Editor: React.FC<EditorProps> = ({ file, onSave, onDelete }) => {
                 <span className="status-error">
                   <HiX /> Error
                 </span>
+              )}
+            </div>
+          )}
+
+          {state.mode === 'wysiwyg' && editor && (
+            <div className="table-controls">
+              <button
+                className="action-btn"
+                onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+                title="Insert table"
+              >
+                <HiTable /> <HiPlus />
+              </button>
+              {editor.can().addColumnAfter() && (
+                <>
+                  <button
+                    className="action-btn"
+                    onClick={() => editor.chain().focus().addColumnAfter().run()}
+                    title="Add column"
+                  >
+                    Col <HiPlus />
+                  </button>
+                  <button
+                    className="action-btn"
+                    onClick={() => editor.chain().focus().deleteColumn().run()}
+                    title="Delete column"
+                  >
+                    Col <HiMinus />
+                  </button>
+                </>
+              )}
+              {editor.can().addRowAfter() && (
+                <>
+                  <button
+                    className="action-btn"
+                    onClick={() => editor.chain().focus().addRowAfter().run()}
+                    title="Add row"
+                  >
+                    Row <HiPlus />
+                  </button>
+                  <button
+                    className="action-btn"
+                    onClick={() => editor.chain().focus().deleteRow().run()}
+                    title="Delete row"
+                  >
+                    Row <HiMinus />
+                  </button>
+                  <button
+                    className="action-btn"
+                    onClick={() => editor.chain().focus().deleteTable().run()}
+                    title="Delete table"
+                  >
+                    <HiTable /> <HiMinus />
+                  </button>
+                </>
               )}
             </div>
           )}

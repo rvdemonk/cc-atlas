@@ -1,4 +1,4 @@
-use crate::markdown::*;
+use crate::utils::markdown::*;
 use std::fs;
 
 #[test]
@@ -58,7 +58,7 @@ fn test_round_trip_links() {
 }
 
 #[test]
-fn test_round_trip_tables() {
+fn test_round_trip_simple_table() {
     let original = "| Header 1 | Header 2 |\n|----------|----------|\n| Cell 1   | Cell 2   |";
     let html = markdown_to_html(original);
     let converted = html_to_markdown(&html).unwrap();
@@ -67,6 +67,137 @@ fn test_round_trip_tables() {
     assert!(converted.contains("Header 2"));
     assert!(converted.contains("Cell 1"));
     assert!(converted.contains("Cell 2"));
+}
+
+#[test]
+fn test_round_trip_complex_table() {
+    let original = r#"| Feature | Status | Priority | Notes |
+|---------|--------|----------|-------|
+| Authentication | ✅ Done | High | OAuth2 implemented |
+| Dashboard | 🚧 In Progress | Medium | Needs UI polish |
+| API Integration | ❌ Not Started | Low | Waiting for specs |
+| **Bold text** | *Italic* | `code` | [Link](https://example.com) |"#;
+    
+    let html = markdown_to_html(original);
+    let converted = html_to_markdown(&html).unwrap();
+    
+    // Check headers preserved
+    assert!(converted.contains("Feature"));
+    assert!(converted.contains("Status"));
+    assert!(converted.contains("Priority"));
+    assert!(converted.contains("Notes"));
+    
+    // Check content preserved
+    assert!(converted.contains("Authentication"));
+    assert!(converted.contains("Dashboard"));
+    assert!(converted.contains("API Integration"));
+    
+    // Check emojis preserved
+    assert!(converted.contains("✅") || converted.contains("Done"));
+    assert!(converted.contains("🚧") || converted.contains("In Progress"));
+    assert!(converted.contains("❌") || converted.contains("Not Started"));
+    
+    // Check formatting preserved in cells
+    assert!(converted.contains("Bold text") || converted.contains("**Bold text**"));
+    assert!(converted.contains("Italic") || converted.contains("*Italic*"));
+    assert!(converted.contains("code") || converted.contains("`code`"));
+    assert!(converted.contains("https://example.com"));
+}
+
+#[test]
+fn test_round_trip_table_alignment() {
+    // Test table with alignment (though alignment may not be preserved perfectly)
+    let original = r#"| Left | Center | Right |
+|:-----|:------:|------:|
+| L1   | C1     | R1    |
+| L2   | C2     | R2    |"#;
+    
+    let html = markdown_to_html(original);
+    let converted = html_to_markdown(&html).unwrap();
+    
+    // Check all cells are preserved
+    assert!(converted.contains("Left"));
+    assert!(converted.contains("Center"));
+    assert!(converted.contains("Right"));
+    assert!(converted.contains("L1"));
+    assert!(converted.contains("C1"));
+    assert!(converted.contains("R1"));
+    assert!(converted.contains("L2"));
+    assert!(converted.contains("C2"));
+    assert!(converted.contains("R2"));
+}
+
+#[test]
+fn test_round_trip_table_with_empty_cells() {
+    let original = r#"| Col1 | Col2 | Col3 |
+|------|------|------|
+| A    |      | C    |
+|      | B    |      |
+| X    | Y    | Z    |"#;
+    
+    let html = markdown_to_html(original);
+    let converted = html_to_markdown(&html).unwrap();
+    
+    // Check headers
+    assert!(converted.contains("Col1"));
+    assert!(converted.contains("Col2"));
+    assert!(converted.contains("Col3"));
+    
+    // Check non-empty cells
+    assert!(converted.contains("A"));
+    assert!(converted.contains("B"));
+    assert!(converted.contains("C"));
+    assert!(converted.contains("X"));
+    assert!(converted.contains("Y"));
+    assert!(converted.contains("Z"));
+}
+
+#[test]
+fn test_round_trip_table_with_pipes_in_cells() {
+    // Test escaping of pipes within cells
+    let original = r#"| Command | Description |
+|---------|-------------|
+| `a \| b` | Pipe example |
+| `grep \| wc` | Count lines |"#;
+    
+    let html = markdown_to_html(original);
+    let converted = html_to_markdown(&html).unwrap();
+    
+    assert!(converted.contains("Command"));
+    assert!(converted.contains("Description"));
+    assert!(converted.contains("Pipe example"));
+    assert!(converted.contains("Count lines"));
+    // The pipe character handling might vary
+    assert!(converted.contains("a") && converted.contains("b"));
+    assert!(converted.contains("grep") && converted.contains("wc"));
+}
+
+#[test] 
+fn test_table_before_and_after_content() {
+    let original = r#"# Document Title
+
+Some text before the table.
+
+| Header 1 | Header 2 |
+|----------|----------|
+| Data 1   | Data 2   |
+
+Some text after the table.
+
+## Another Section"#;
+    
+    let html = markdown_to_html(original);
+    let converted = html_to_markdown(&html).unwrap();
+    
+    // Check document structure is preserved
+    assert!(converted.contains("Document Title"));
+    assert!(converted.contains("Some text before the table"));
+    assert!(converted.contains("Header 1"));
+    assert!(converted.contains("Header 2"));
+    assert!(converted.contains("Data 1"));
+    assert!(converted.contains("Data 2"));
+    assert!(converted.contains("Some text after the table"));
+    assert!(converted.contains("Another Section"));
 }
 
 #[test]

@@ -190,7 +190,7 @@ fn count_depth(path: &Path) -> usize {
     path.components().count()
 }
 
-fn get_recommendations(tree: &DirectoryInfo) -> Vec<PathBuf> {
+pub fn get_recommendations(tree: &DirectoryInfo) -> Vec<PathBuf> {
     let mut recommendations = Vec::new();
     collect_recommendations(tree, &mut recommendations);
     recommendations
