@@ -116,7 +116,8 @@ pub fn get_chat_metadata(path: &Path) -> Result<ChatMetadata> {
 pub fn export_chat(
     session_id: &str,
     project_root: &Path,
-    options: &ExportOptions
+    options: &ExportOptions,
+    custom_name: Option<&str>
 ) -> Result<ExportResult> {
     // Find the chat file
     let chats = find_project_chats(project_root)?;
@@ -131,7 +132,7 @@ pub fn export_chat(
     let markdown = format_as_markdown(&messages, &metadata, options);
 
     // Generate export path
-    let export_path = generate_export_path(session_id);
+    let export_path = generate_export_path(session_id, custom_name);
 
     // Ensure parent directory exists
     if let Some(parent) = export_path.parent() {
@@ -453,17 +454,28 @@ fn format_tools(tools: &[ToolCallSummary], max_files: usize) -> String {
 }
 
 /// Generate export path
-fn generate_export_path(session_id: &str) -> PathBuf {
+fn generate_export_path(session_id: &str, custom_name: Option<&str>) -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     let base_dir = PathBuf::from(home).join("Desktop/cc-atlas-exports");
 
-    let mut path = base_dir.join(format!("{}.md", session_id));
+    // Use custom name if provided, otherwise session_id
+    let base_name = custom_name.unwrap_or(session_id);
+
+    // Ensure .md extension
+    let filename = if base_name.ends_with(".md") {
+        base_name.to_string()
+    } else {
+        format!("{}.md", base_name)
+    };
+
+    let mut path = base_dir.join(&filename);
 
     // Handle conflicts by appending counter
     if path.exists() {
         let mut counter = 1;
+        let name_without_ext = filename.trim_end_matches(".md");
         loop {
-            path = base_dir.join(format!("{}_{}.md", session_id, counter));
+            path = base_dir.join(format!("{}_{}.md", name_without_ext, counter));
             if !path.exists() {
                 break;
             }

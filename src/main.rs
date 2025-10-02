@@ -48,6 +48,9 @@ enum Commands {
 
         #[arg(short, long, default_value = ".")]
         project: PathBuf,
+
+        #[arg(short, long, help = "Custom name for exported file")]
+        name: Option<String>,
     },
 }
 
@@ -67,8 +70,8 @@ async fn main() -> Result<()> {
         Some(Commands::ListChats { project }) => {
             handle_list_chats(&project)?;
         }
-        Some(Commands::ExportChat { identifier, project }) => {
-            handle_export_chat(&identifier, &project)?;
+        Some(Commands::ExportChat { identifier, project, name }) => {
+            handle_export_chat(&identifier, &project, name.as_deref())?;
         }
         None => {
             println!("Starting cc-atlas server on default port 3999");
@@ -98,7 +101,7 @@ fn handle_list_chats(project: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn handle_export_chat(identifier: &str, project: &PathBuf) -> Result<()> {
+fn handle_export_chat(identifier: &str, project: &PathBuf, custom_name: Option<&str>) -> Result<()> {
     // Check if identifier is a number (index) or session ID
     let session_id = if let Ok(index) = identifier.parse::<usize>() {
         // It's an index - look up the session ID
@@ -117,7 +120,8 @@ fn handle_export_chat(identifier: &str, project: &PathBuf) -> Result<()> {
     let result = chat_exporter::export_chat(
         &session_id,
         project,
-        &ExportOptions::default()
+        &ExportOptions::default(),
+        custom_name
     )?;
 
     println!("✅ Exported {} message{} to:",

@@ -185,7 +185,7 @@ pub async fn export_chat(
         ExportOptions::default()
     };
 
-    let result = chat_exporter::export_chat(&session_id, root, &options)
+    let result = chat_exporter::export_chat(&session_id, root, &options, None)
         .map_err(|e| ServerError::Internal(format!("Failed to export chat: {}", e)))?;
 
     Ok(Json(result))
