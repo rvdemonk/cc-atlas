@@ -6,9 +6,9 @@ use serde_json::Value;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::services::{analyzer, chat_exporter};
+use crate::services::{analyzer, chat_exporter, docs};
 use crate::utils::{markdown, paths};
-use crate::models::{ChatMetadata, DirectoryInfo, ExportOptions, ExportResult, MemoryFileResponse};
+use crate::models::{ChatMetadata, DirectoryInfo, DocFileResponse, DocsNode, ExportOptions, ExportResult, MemoryFileResponse};
 
 use super::{AppState, error::ServerError};
 
@@ -189,4 +189,83 @@ pub async fn export_chat(
         .map_err(|e| ServerError::Internal(format!("Failed to export chat: {}", e)))?;
 
     Ok(Json(result))
+}
+
+// ===== Docs Handlers =====
+
+pub async fn get_docs_tree(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Option<DocsNode>>, ServerError> {
+    let root = Path::new(&state.project_root);
+
+    // Find docs directory
+    let docs_dir = match docs::find_docs_dir(root) {
+        Some(dir) => dir,
+        None => return Ok(Json(None)), // No docs directory found
+    };
+
+    // Build docs tree
+    let tree = docs::build_docs_tree(&docs_dir)
+        .map_err(|e| ServerError::Internal(format!("Failed to build docs tree: {}", e)))?;
+
+    Ok(Json(Some(tree)))
+}
+
+pub async fn get_doc_file(
+    State(state): State<Arc<AppState>>,
+    AxumPath(path): AxumPath<String>,
+) -> Result<Json<DocFileResponse>, ServerError> {
+    let root = Path::new(&state.project_root);
+
+    // Find docs directory
+    let docs_dir = docs::find_docs_dir(root)
+        .ok_or_else(|| ServerError::NotFound("Docs directory not found".to_string()))?;
+
+    // Read file content
+    let content = docs::read_doc_file(&docs_dir, &path)
+        .map_err(|e| ServerError::NotFound(format!("Failed to read doc file: {}", e)))?;
+
+    // Convert markdown to HTML
+    let content_html = markdown::markdown_to_html(&content);
+
+    Ok(Json(DocFileResponse {
+        path,
+        content,
+        content_html,
+    }))
+}
+
+pub async fn update_doc_file(
+    State(state): State<Arc<AppState>>,
+    AxumPath(path): AxumPath<String>,
+    Json(body): Json<Value>,
+) -> Result<Json<Value>, ServerError> {
+    let root = Path::new(&state.project_root);
+
+    // Find docs directory
+    let docs_dir = docs::find_docs_dir(root)
+        .ok_or_else(|| ServerError::NotFound("Docs directory not found".to_string()))?;
+
+    // Check if we're receiving HTML or markdown
+    let content_html = body.get("content_html").and_then(|v| v.as_str());
+    let content_md = body.get("content").and_then(|v| v.as_str());
+
+    let final_content = if let Some(html) = content_html {
+        // Convert HTML to markdown for saving
+        markdown::html_to_markdown(html)
+            .map_err(|e| ServerError::Internal(format!("Failed to convert HTML to markdown: {}", e)))?
+    } else if let Some(md) = content_md {
+        // Use markdown directly
+        md.to_string()
+    } else {
+        return Err(ServerError::BadRequest("Missing content or content_html".to_string()));
+    };
+
+    // Write file
+    docs::write_doc_file(&docs_dir, &path, &final_content)
+        .map_err(|e| ServerError::Internal(format!("Failed to write doc file: {}", e)))?;
+
+    Ok(Json(serde_json::json!({
+        "content": final_content
+    })))
 }

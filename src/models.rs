@@ -36,6 +36,23 @@ pub struct DirectoryInfo {
     pub stats: FileStats,
 }
 
+// ===== Docs Models =====
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DocsNode {
+    pub path: String,           // Relative to docs/
+    pub name: String,           // Display name (no .md suffix for files)
+    pub is_file: bool,
+    pub children: Vec<DocsNode>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DocFileResponse {
+    pub path: String,
+    pub content: String,
+    pub content_html: String,
+}
+
 // ===== Chat Export Models =====
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

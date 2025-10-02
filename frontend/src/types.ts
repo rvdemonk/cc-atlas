@@ -41,6 +41,8 @@ export interface SidebarProps {
   selectedFile: MemoryFile | null
   onSelectFile: (file: MemoryFile | null) => void
   collapsed: boolean
+  viewMode: 'memory' | 'docs'
+  onViewModeChange: (mode: 'memory' | 'docs') => void
 }
 
 export interface EditorProps {
@@ -65,4 +67,18 @@ export interface EditorState {
   lastSaved: Date | null
   hasChanges: boolean
   mode: 'wysiwyg' | 'source'
+}
+
+// Docs types
+export interface DocsNode {
+  path: string
+  name: string
+  is_file: boolean
+  children: DocsNode[]
+}
+
+export interface DocFile {
+  path: string
+  content: string
+  content_html: string
 }

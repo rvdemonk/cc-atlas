@@ -7,6 +7,8 @@ import * as api from './api/client'
 import { deleteMemoryFile } from './api/client'
 import { MemoryFile, AppState } from './types'
 
+type ViewMode = 'memory' | 'docs'
+
 function App() {
   const [state, setState] = useState<AppState>({
     tree: null,
@@ -17,6 +19,8 @@ function App() {
     error: null,
     sidebarCollapsed: false
   })
+
+  const [viewMode, setViewMode] = useState<ViewMode>('memory')
 
   // Load initial data
   useEffect(() => {
@@ -215,11 +219,11 @@ function App() {
 
   return (
     <div className="app">
-      <Header 
+      <Header
         onToggleSidebar={toggleSidebar}
         projectName={state.tree?.name || 'cc-atlas'}
       />
-      
+
       <div className="app-body">
         <Sidebar
           tree={state.tree}
@@ -228,13 +232,25 @@ function App() {
           selectedFile={state.selectedFile}
           onSelectFile={selectFile}
           collapsed={state.sidebarCollapsed}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
-        
-        <Editor
-          file={state.selectedFile}
-          onSave={updateFile}
-          onDelete={deleteFile}
-        />
+
+        {viewMode === 'memory' ? (
+          <Editor
+            file={state.selectedFile}
+            onSave={updateFile}
+            onDelete={deleteFile}
+          />
+        ) : (
+          <div className="docs-view">
+            <div className="docs-placeholder">
+              <h2>Documentation Browser</h2>
+              <p>Browse and edit markdown files in your docs/ directory</p>
+              <p className="coming-soon">Coming soon...</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

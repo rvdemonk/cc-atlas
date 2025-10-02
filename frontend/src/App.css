@@ -140,6 +140,41 @@ body {
   transform: translateY(-1px);
 }
 
+/* Docs view */
+.docs-view {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+}
+
+.docs-placeholder {
+  text-align: center;
+  color: var(--text-secondary);
+  max-width: 500px;
+  padding: var(--space-xl);
+}
+
+.docs-placeholder h2 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+}
+
+.docs-placeholder p {
+  margin-bottom: var(--space-sm);
+  line-height: 1.6;
+}
+
+.docs-placeholder .coming-soon {
+  margin-top: var(--space-lg);
+  color: var(--eva-purple);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
 /* Responsive breakpoints */
 @media (max-width: 768px) {
   :root {

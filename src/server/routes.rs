@@ -20,6 +20,9 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/recommendations", get(handlers::get_recommendations))
         .route("/chats", get(handlers::get_chats))
         .route("/chats/:session_id/export", post(handlers::export_chat))
+        .route("/docs/tree", get(handlers::get_docs_tree))
+        .route("/docs/files/*path", get(handlers::get_doc_file))
+        .route("/docs/files/*path", put(handlers::update_doc_file))
         .with_state(state);
 
     let frontend_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

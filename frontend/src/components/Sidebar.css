@@ -19,11 +19,67 @@
   display: none;
 }
 
+/* Sidebar header with view mode toggle */
+.sidebar-header {
+  display: flex;
+  gap: 2px;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.view-mode-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-mode-toggle svg {
+  font-size: 14px;
+}
+
+.view-mode-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.view-mode-toggle.active {
+  background: var(--bg-tertiary);
+  border-color: var(--eva-orange);
+  color: var(--eva-orange);
+}
+
+.view-mode-toggle span {
+  white-space: nowrap;
+}
+
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--space-sm);
+}
+
+.sidebar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 /* Custom scrollbar */
