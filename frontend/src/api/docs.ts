@@ -21,6 +21,43 @@ export async function fetchDocFile(path: string): Promise<DocFile> {
   return response.json()
 }
 
+export async function createDocFile(
+  path: string,
+  content: string,
+  isHtml: boolean = false
+): Promise<{ content: string; created: boolean }> {
+  const body = isHtml
+    ? { content_html: content }
+    : { content };
+
+  console.log('Creating doc at:', path, 'isHtml:', isHtml, 'content length:', content.length)
+
+  const response = await fetch(`${API_BASE}/docs/files/${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    // If we get 409 Conflict, the file already exists
+    if (response.status === 409) {
+      console.log('Doc file already exists')
+      throw new Error('File already exists')
+    }
+
+    console.error('Create failed with status:', response.status)
+    const text = await response.text()
+    console.error('Response:', text)
+    throw new Error(`Failed to create doc file: ${response.status}`)
+  }
+
+  const result = await response.json()
+  console.log('Create successful, returned content length:', result.content?.length)
+  return { ...result, created: true }
+}
+
 export async function updateDocFile(
   path: string,
   content: string,

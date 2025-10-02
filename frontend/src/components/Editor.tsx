@@ -23,10 +23,12 @@ export const Editor: React.FC<EditorProps> = ({ file, onSave, onDelete }) => {
   const lastLoadedPath = useRef<string | null>(null)
   const [fileExists, setFileExists] = useState<boolean>(false)
 
-  // Determine placeholder text based on file existence
+  // Determine placeholder text based on file existence and type
   const placeholderText = !fileExists && file
-    ? `Start typing to create CLAUDE.md in ${file.path.replace('/CLAUDE.md', '')}...`
-    : 'Start typing to create memory file here...'
+    ? (file.type === 'memory'
+        ? `Start typing to create CLAUDE.md in ${file.path.replace('/CLAUDE.md', '')}...`
+        : `Start typing to create ${file.path}...`)
+    : 'Start typing...'
 
   // TipTap editor instance
   const editor = useEditor({

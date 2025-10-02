@@ -22,6 +22,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/chats/:session_id/export", post(handlers::export_chat))
         .route("/docs/tree", get(handlers::get_docs_tree))
         .route("/docs/files/*path", get(handlers::get_doc_file))
+        .route("/docs/files/*path", post(handlers::create_doc_file))
         .route("/docs/files/*path", put(handlers::update_doc_file))
         .with_state(state);
 

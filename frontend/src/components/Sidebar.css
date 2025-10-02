@@ -82,6 +82,70 @@
   text-align: center;
 }
 
+/* Docs tree header */
+.docs-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.docs-tree-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.docs-tree-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  padding: 0;
+}
+
+.docs-tree-add-btn:hover {
+  background: var(--eva-purple);
+  border-color: var(--eva-purple);
+  color: white;
+}
+
+/* Tree node add button */
+.tree-node-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+  padding: 0;
+}
+
+.tree-node-add:hover {
+  background: var(--eva-purple);
+  border-color: var(--eva-purple);
+  color: white;
+}
+
 /* Custom scrollbar */
 .sidebar-content::-webkit-scrollbar {
   width: 6px;

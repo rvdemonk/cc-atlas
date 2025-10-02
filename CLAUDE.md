@@ -56,6 +56,8 @@ Core Features
 
 * Edit memory files with live save
 
+* Browse and edit markdown files in docs/ directory (general project documents - plans, notes, critiques - separate from code)
+
 * Complexity analysis (\>10 files or \>500 lines triggers recommendation)
 
 Next Phase

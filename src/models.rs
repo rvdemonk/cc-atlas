@@ -51,6 +51,7 @@ pub struct DocFileResponse {
     pub path: String,
     pub content: String,
     pub content_html: String,
+    pub exists: bool,
 }
 
 // ===== Chat Export Models =====

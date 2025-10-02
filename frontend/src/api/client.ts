@@ -12,5 +12,6 @@ export {
 export {
   fetchDocsTree,
   fetchDocFile,
+  createDocFile,
   updateDocFile,
 } from './docs'

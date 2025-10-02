@@ -43,10 +43,14 @@ export interface SidebarProps {
   collapsed: boolean
   viewMode: 'memory' | 'docs'
   onViewModeChange: (mode: 'memory' | 'docs') => void
+  docsTree: DocsNode | null
+  selectedDocFile: DocFile | null
+  onDocFileSelect: (path: string) => void
+  onCreateDoc: (folderPath: string) => void
 }
 
 export interface EditorProps {
-  file: MemoryFile | null
+  file: EditableFile | null
   onSave: (path: string, content: string, isHtml?: boolean) => Promise<{ success: boolean; error?: string; content?: string }>
   onDelete?: (path: string) => Promise<boolean>
 }
@@ -78,7 +82,13 @@ export interface DocsNode {
 }
 
 export interface DocFile {
-  path: string
+  path: string        // Relative to docs/: "guides/setup.md" not "docs/guides/setup.md"
   content: string
   content_html: string
+  exists: boolean     // True when file exists on disk
 }
+
+// Editable file union type for Editor
+export type EditableFile =
+  | ({ type: 'memory' } & MemoryFile)
+  | ({ type: 'doc' } & DocFile)

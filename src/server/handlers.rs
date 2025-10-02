@@ -232,7 +232,51 @@ pub async fn get_doc_file(
         path,
         content,
         content_html,
+        exists: true,
     }))
+}
+
+pub async fn create_doc_file(
+    State(state): State<Arc<AppState>>,
+    AxumPath(path): AxumPath<String>,
+    Json(body): Json<Value>,
+) -> Result<Json<Value>, ServerError> {
+    let root = Path::new(&state.project_root);
+
+    // Find docs directory
+    let docs_dir = docs::find_docs_dir(root)
+        .ok_or_else(|| ServerError::NotFound("Docs directory not found".to_string()))?;
+
+    // Check if file already exists
+    let file_path = docs_dir.join(&path);
+    if file_path.exists() {
+        return Err(ServerError::Conflict(format!("File already exists: {}", path)));
+    }
+
+    // Check if we're receiving HTML or markdown
+    let content_html = body.get("content_html").and_then(|v| v.as_str());
+    let content_md = body.get("content").and_then(|v| v.as_str());
+
+    let final_content = if let Some(html) = content_html {
+        // Convert HTML to markdown for saving
+        markdown::html_to_markdown(html)
+            .map_err(|e| ServerError::Internal(format!("Failed to convert HTML to markdown: {}", e)))?
+    } else if let Some(md) = content_md {
+        // Use markdown directly
+        md.to_string()
+    } else {
+        return Err(ServerError::BadRequest("Missing content or content_html".to_string()));
+    };
+
+    // Write file
+    docs::write_doc_file(&docs_dir, &path, &final_content)
+        .map_err(|e| ServerError::Internal(format!("Failed to create doc file: {}", e)))?;
+
+    Ok(Json(serde_json::json!({
+        "path": path,
+        "content": final_content,
+        "created": true
+    })))
 }
 
 pub async fn update_doc_file(
